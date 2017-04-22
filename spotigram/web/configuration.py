@@ -1,4 +1,4 @@
-from spotigram.flask.models import ConfigurationItem
+from spotigram.web.models import ConfigurationItem
 from spotigram import db
 
 

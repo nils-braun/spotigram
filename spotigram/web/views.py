@@ -1,7 +1,7 @@
 def add_views(app):
     from flask import request
 
-    from spotigram.flask.models import User
+    from spotigram.web.models import User
     from spotigram import db
     from spotigram.spotify.functions import tokenize
     from spotigram.spotify.datatypes import client

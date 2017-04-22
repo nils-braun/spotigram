@@ -1,7 +1,7 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 
-from spotigram.flask.views import add_views
+from spotigram.web.views import add_views
 
 app = Flask(__name__)
 db = SQLAlchemy(app)

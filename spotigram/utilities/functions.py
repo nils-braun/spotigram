@@ -1,7 +1,7 @@
 from spotigram import db
 from spotigram.telegram.datatypes import bot
-from spotigram.flask.models import User
-from spotigram.flask.configuration import configuration
+from spotigram.web.models import User
+from spotigram.web.configuration import configuration
 from spotigram.telegram.functions import get_updates, send_message
 from spotigram.telegram.queries import get_answer
 
