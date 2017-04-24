@@ -1,5 +1,5 @@
 from spotigram import app
-from spotigram.utilities.basetypes import RequestedObject
+from spotigram.utilities.basetypes import RequestedObject, StrictRequestedObject, Dict, PageableObject, StrictDict
 
 
 class Client:
@@ -49,3 +49,43 @@ class NoneObject(RequestedObject):
 
     def from_request(self, r):
         pass
+
+
+class PlaylistStub(RequestedObject):
+    def __init__(self):
+        self.collaborative = None
+        self.id = None
+        self.name = None
+        self.images = None
+        self.uri = None
+
+    def stringify(self):
+        return "{name}".format(**self.__dict__)
+
+
+class PlaylistTrack(StrictDict):
+    def __init__(self):
+        super().__init__({"added_by": SpotifyUser(), "track": Track()})
+        self.added_at = None
+        self.is_local = None
+
+
+class Playlist(Dict):
+    def __init__(self):
+        Dict.__init__(self, {"tracks": PageableObject(PlaylistTrack())})
+
+
+class SpotifyUser(RequestedObject):
+    def __init__(self):
+        self.id = None
+
+    def stringify(self):
+        return "{id}".format(**self.__dict__)
+
+
+class Snapshot(StrictRequestedObject):
+    def stringify(self):
+        return "{snapshot_id}".format(**self.__dict__)
+
+    def __init__(self):
+        self.snapshot_id = None

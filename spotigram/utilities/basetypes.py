@@ -64,7 +64,7 @@ class Dict(RequestedObject):
 
             del json[key]
 
-        RequestedObject.from_json(self, json)
+        super().from_json(json)
 
     def stringify(self):
         return_string = ""
@@ -79,12 +79,14 @@ class Dict(RequestedObject):
 
         return return_string
 
+class StrictDict(Dict, StrictRequestedObject):
+    pass
+
 
 class PageableObject(List):
-    def __init__(self, subclass, access):
+    # TODO: Include next
+    def __init__(self, subclass):
         List.__init__(self, subclass)
-
-        self.access = access
 
     def from_json(self, json):
         List.from_json(self, json["items"])
