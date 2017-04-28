@@ -3,8 +3,11 @@ from spotigram import db
 
 class User(db.Model):
     __tablename__ = 'user'
+    # Telegram ID
     id = db.Column(db.Integer, primary_key=True)
+    # Spotify Refresh Code
     refresh_code = db.Column(db.String(100), default="")
+    # Spotify Chosen Device
     chosen_device = db.Column(db.String(100), default="")
 
     def __init__(self, id):

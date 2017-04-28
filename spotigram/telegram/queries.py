@@ -11,7 +11,12 @@ def get_answer(query, user, db):
         access = refresh_access(access, client)
 
         devices = get_devices(access)
-        return "<b>Devices:</b>\n" + devices.stringify()
+
+        return_string = "<b>Devices:</b>\n"
+        for device in devices:
+            return_string += device.name + "\n"
+
+        return return_string
     elif query.startswith("search "):
         if not user.refresh_code:
             return "You have to authorize first."
@@ -20,7 +25,16 @@ def get_answer(query, user, db):
         access = refresh_access(access, client)
 
         results = search(query[len("search "):], access)
-        return results.stringify()
+
+        return_string = "<b>Tracks:</b>\n"
+        for track in results.tracks:
+            return_string += track.name + "\n"
+
+        return_string += "<b>Artists:</b>\n"
+        for artist in results.artists:
+            return_string += artist.name + "\n"
+
+        return return_string
     elif query.startswith("set device "):
         if not user.refresh_code:
             return "You have to authorize first."
@@ -60,11 +74,9 @@ def get_answer(query, user, db):
             return "You chosen device is not longer valid"
 
         results = search(query[len("play_song "):], access)
-        track = results["tracks"][0]
+        track = results.tracks[0]
 
-        play(track, chosen_device, access)
-
-        return "OK"
+        return play([track], chosen_device, access)
     elif query == "authorize":
         if user.refresh_code:
             return "You are already authorized."

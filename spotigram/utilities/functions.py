@@ -16,7 +16,7 @@ def query_messages():
 
         configuration["offset"] = str(update.update_id)
 
-        telegram_id = message["from"].id
+        telegram_id = message.from_user.id
         user = User.query.filter_by(id=telegram_id).first()
 
         if not user:

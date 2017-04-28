@@ -2,37 +2,37 @@ import json
 
 import requests
 
-from spotigram.spotify.datatypes import Access, Device, Track, Artist, Playlist, SpotifyUser, PlaylistStub, Snapshot
-from spotigram.utilities.basetypes import List, Dict, PageableObject
+from getapy.basetypes import List, PageableObject, StrictParseObject
+from spotigram.spotify.datatypes import Access, Device, Track, Artist, Playlist, SpotifyUser, PlaylistStub, Snapshot, \
+    SpotifyPageableObject
 
 
-def parse_request(r, object_instance=None):
-    # TODO: Error handling
+def parse(r, parse_type=None):
+    import getapy
 
-    if object_instance is not None:
-        try:
-            json = r.json()
-            object_instance.from_json(json)
-        except:
-            print(r.status_code, r.text)
-            raise
-
-        return object_instance
+    if parse_type:
+        return getapy.parse(r.json(), parse_type)
+    else:
+        return r.text
 
 
 def get_devices(access):
+    class DeviceList(StrictParseObject):
+        devices = List(Device)
+
     r = requests.get("https://api.spotify.com/v1/me/player/devices", headers=access.get_headers())
-    return parse_request(r, Dict({"devices": List(Device())})).devices
+    return parse(r, DeviceList).devices
 
 
 def search(query, access):
+    class SearchResult(StrictParseObject):
+        artists = PageableObject(Artist)
+        tracks = PageableObject(Track)
+
     r = requests.get("https://api.spotify.com/v1/search", headers=access.get_headers(),
                      params={"query": query, "type": "artist,track"})
 
-    return parse_request(r, Dict({
-        "artists": PageableObject(Artist()),
-        "tracks": PageableObject(Track()),
-    }))
+    return parse(r, SearchResult)
 
 
 def play(playable_object, device, access):
@@ -51,11 +51,11 @@ def play(playable_object, device, access):
                      data=data,
                      params={"device_id": device.id})
 
-    return parse_request(r)
+    return parse(r)
 
 
 def authorize(client, state, scopes=None):
-    # TODO: Do not get here
+    # TODO: Do not do a get here
     if scopes is None:
         scopes = ["user-read-playback-state", "user-modify-playback-state streaming",
                   "playlist-modify-private", "playlist-read-private", "playlist-read-collaborative"]
@@ -78,7 +78,7 @@ def tokenize(code, client):
         "redirect_uri": client.url
     })
 
-    return parse_request(r, Access())
+    return parse(r, Access)
 
 
 def refresh_access(access, client):
@@ -90,14 +90,17 @@ def refresh_access(access, client):
         "redirect_uri": client.url
     })
 
-    return parse_request(r, Access(access.refresh_token))
+    new_access = parse(r, Access)
+    new_access.refresh_token = access.refresh_token
+
+    return new_access
 
 
 def get_spotify_user(access):
     r = requests.get("https://api.spotify.com/v1/me",
                      headers=access.get_headers())
 
-    return parse_request(r, SpotifyUser())
+    return parse(r, SpotifyUser)
 
 
 def create_playlist(title, spotify_user, access):
@@ -106,13 +109,13 @@ def create_playlist(title, spotify_user, access):
     r = requests.post("https://api.spotify.com/v1/users/{user_id}/playlists".format(user_id=spotify_user.id),
                       headers=access.get_headers(), data=data)
 
-    return parse_request(r, Playlist())
+    return parse(r, Playlist)
 
 
 def get_playlists(spotify_user, access):
     r = requests.get("https://api.spotify.com/v1/users/{user_id}/playlists".format(user_id=spotify_user.id),
                      headers=access.get_headers())
-    return parse_request(r, PageableObject(PlaylistStub()))
+    return parse(r, SpotifyPageableObject(PlaylistStub))
 
 
 def fill_playlist(playlist, spotify_user, access):
@@ -121,7 +124,7 @@ def fill_playlist(playlist, spotify_user, access):
                                                                                     playlist_id=playlist.id),
         headers=access.get_headers())
 
-    return parse_request(r, Playlist())
+    return parse(r, Playlist)
 
 
 def add_songs(playlist, songs, spotify_user, access):
@@ -130,7 +133,7 @@ def add_songs(playlist, songs, spotify_user, access):
                                                                                            playlist_id=playlist.id),
         headers=access.get_headers(), params={"uris": ",".join([song.uri for song in songs])})
 
-    return parse_request(r, Snapshot())
+    return parse(r, Snapshot)
 
 
 def add_album(playlist, artist, spotify_user, access):

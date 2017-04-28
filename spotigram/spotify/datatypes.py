@@ -1,5 +1,8 @@
+from getapy.basetypes import String, GreedyStringParseObject, PageableObject, Boolean, Int, \
+    StrictParseObject
 from spotigram import app
-from spotigram.utilities.basetypes import RequestedObject, StrictRequestedObject, Dict, PageableObject, StrictDict
+
+Id = String
 
 
 class Client:
@@ -14,78 +17,74 @@ client = Client(client_id=app.config.get("SPOTIFY_CLIENT_ID"),
                 url=app.config.get("SPOTIFY_URL"))
 
 
-class Device(RequestedObject):
-    def stringify(self):
-        return "{name}".format(**self.__dict__)
+def SpotifyPageableObject(subclass_type):
+    class SpotifyPageableObjectInstance(PageableObject(subclass_type)):
+        href = String()
+        limit = Int()
+        next = String()
+        offset = Int()
+        previous = String()
+        total = Int()
+
+    return SpotifyPageableObjectInstance
+
+# TODO: Copy whole definition
 
 
-class Access(RequestedObject):
+class Device(GreedyStringParseObject):
+    name = String()
+
+
+class Access(GreedyStringParseObject):
+    token_type = String()
+    access_token = String()
+
     def __init__(self, refresh_token=""):
         self.refresh_token = refresh_token
 
-    def from_json(self, json):
-        super().from_json(json)
+    @classmethod
+    def construct_from_json(cls, json):
+        instance = super().construct_from_json(json)
 
         # TODO: Date handling
-        self.scope = self.scope.split()
+        instance.scope = instance.scope.split()
+
+        return instance
 
     def get_headers(self):
         return {"Authorization": self.token_type + " " + self.access_token}
 
 
-class Track(RequestedObject):
-    def stringify(self):
-        return "{name}".format(**self.__dict__)
+class Track(GreedyStringParseObject):
+    name = String()
 
 
-class Artist(RequestedObject):
-    def stringify(self):
-        return "{name}".format(**self.__dict__)
+class Artist(GreedyStringParseObject):
+    name = String()
 
 
-class NoneObject(RequestedObject):
-    def stringify(self):
-        return ""
-
-    def from_request(self, r):
-        pass
-
-
-class PlaylistStub(RequestedObject):
-    def __init__(self):
-        self.collaborative = None
-        self.id = None
-        self.name = None
-        self.images = None
-        self.uri = None
-
-    def stringify(self):
-        return "{name}".format(**self.__dict__)
+class PlaylistStub(GreedyStringParseObject):
+    collaborative = String()
+    id = Id()
+    name = String()
+    images = String()
+    uri = String()
 
 
-class PlaylistTrack(StrictDict):
-    def __init__(self):
-        super().__init__({"added_by": SpotifyUser(), "track": Track()})
-        self.added_at = None
-        self.is_local = None
+class SpotifyUser(GreedyStringParseObject):
+    id = Id()
 
 
-class Playlist(Dict):
-    def __init__(self):
-        Dict.__init__(self, {"tracks": PageableObject(PlaylistTrack())})
+class PlaylistTrack(GreedyStringParseObject):
+    added_by = SpotifyUser()
+    track = Track()
+    added_at = String()
+    is_local = Boolean()
 
 
-class SpotifyUser(RequestedObject):
-    def __init__(self):
-        self.id = None
-
-    def stringify(self):
-        return "{id}".format(**self.__dict__)
+class Playlist(GreedyStringParseObject):
+    tracks = SpotifyPageableObject(PlaylistTrack)
 
 
-class Snapshot(StrictRequestedObject):
-    def stringify(self):
-        return "{snapshot_id}".format(**self.__dict__)
-
-    def __init__(self):
-        self.snapshot_id = None
+class Snapshot(StrictParseObject):
+    snapshot_id = String()

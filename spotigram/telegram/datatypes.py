@@ -1,5 +1,5 @@
+from getapy.basetypes import GreedyStringParseObject, StrictParseObject, String
 from spotigram import app
-from spotigram.utilities.basetypes import Dict, StrictRequestedObject, RequestedObject
 
 
 class Bot:
@@ -10,35 +10,17 @@ class Bot:
 bot = Bot(token=app.config.get("TELEGRAM_BOT_KEY"))
 
 
-class BotDescription(RequestedObject):
+class BotDescription(GreedyStringParseObject):
     pass
 
 
-class Update(Dict):
-    def __init__(self):
-        super().__init__({"message": Message()})
-
-    def stringify(self):
-        return self.message.stringify()
-
-
-class User(StrictRequestedObject):
-    def __init__(self):
-        self.first_name = None
-        self.id = None
-
-    def stringify(self):
-        return "{first_name} ({id})".format(first_name=self.first_name, id=self.id)
-
-
-class Chat(StrictRequestedObject):
-    def __init__(self):
-        self.first_name = None
-        self.last_name = None
-        self.id = None
-        self.type = None
-        self.title = None
-        self.username = None
+class Chat(StrictParseObject):
+    first_name = String()
+    last_name = String()
+    id = String()
+    type = String()
+    title = String()
+    username = String()
 
     @property
     def name(self):
@@ -49,13 +31,24 @@ class Chat(StrictRequestedObject):
                 return self.first_name
         return self.type
 
-    def stringify(self):
-        return "{name} ({id})".format(name=self.name, id=self.id)
+
+class Message(GreedyStringParseObject):
+    chat = Chat()
+
+    @classmethod
+    def construct_from_json(cls, json):
+        # Special handling because we can not call a class member "from" in python
+
+        instance = super().construct_from_json(json)
+        instance.__dict__["from_user"] = User.construct_from_json(json["from"])
+
+        return instance
 
 
-class Message(Dict):
-    def __init__(self):
-        super().__init__({"from": User(), "chat": Chat()})
+class Update(GreedyStringParseObject):
+    message = Message()
 
-    def stringify(self):
-        return "{user}: {text}".format(user=self.__dict__["from"].stringify(), text=self.text)
+
+class User(StrictParseObject):
+    first_name = String()
+    id = String()

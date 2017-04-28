@@ -1,31 +1,30 @@
 import requests
 
+from getapy.basetypes import List
 from spotigram.telegram.datatypes import Update, BotDescription
-from spotigram.utilities.basetypes import List
+
+from getapy import parse
 
 
-def parse_request(r, object_instance):
-    json = r.json()
+def parse_request(r, parse_type):
     try:
-        object_instance.from_json(json["result"])
-
-        return object_instance
-    except:
-        print(json)
+        return parse(r.json()["result"], parse_type)
+    except Exception as e:
+        print(r.json())
         raise
 
 
 def get_me(bot):
     r = requests.get("https://api.telegram.org/bot{token}/getMe".format(token=bot.token))
 
-    return parse_request(r, BotDescription())
+    return parse_request(r, BotDescription)
 
 
 def get_updates(bot, offset, timeout):
     r = requests.get("https://api.telegram.org/bot{token}/getUpdates".format(token=bot.token),
                      params={"allowedUpdates": ["messages"], "offset": offset, "timeout": timeout})
 
-    return parse_request(r, List(Update()))
+    return parse_request(r, List(Update))
 
 
 def send_message(bot, chat, text):
